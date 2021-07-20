@@ -2,7 +2,10 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <LiquidCrystal.h>
+#include <dht_nonblocking.h>
 
+#define DHT_SENSOR_TYPE DHT_TYPE_11
+#define DHT_SENSOR_PIN 2
 #define SS_PIN 53
 #define RST_PIN 13
 
@@ -34,6 +37,7 @@ volatile unsigned char* port_a = (unsigned char*) 0x22;
 volatile unsigned char* ddr_a  = (unsigned char*) 0x21;
 volatile unsigned char* pin_a  = (unsigned char*) 0x20;
 
+DHT_nonblocking dht_sensor( DHT_SENSOR_PIN, DHT_SENSOR_TYPE );
 MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
 
 MFRC522::MIFARE_Key key;
