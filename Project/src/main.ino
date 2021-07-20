@@ -75,6 +75,7 @@ void setup() {
 }
 
 void loop() {
+
   if( !authorized) 
   {
     while(!rfid.PICC_ReadCardSerial()&& !rfid.PICC_IsNewCardPresent()){
