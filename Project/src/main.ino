@@ -10,12 +10,12 @@
 //This is for LCD change info button
 //define port H Register pointers
 volatile unsigned char* port_h = (unsigned char*) 0x102;
-volatile unsigned char* ddr_h = (unsigned char*) 0x101;
-volatile unsigned char* pin_h = (unsigned char*) 0x100;
+volatile unsigned char* ddr_h  = (unsigned char*) 0x101;
+volatile unsigned char* pin_h  = (unsigned char*) 0x100;
 // Watersensor
-volatile unsigned char* portF = (unsigned char*) 0x31;
-volatile unsigned char* ddrF = (unsigned char*) 0x30;
-volatile unsigned char* pinF  = (unsigned char*) 0x2F;
+volatile unsigned char* port_f = (unsigned char*) 0x31;
+volatile unsigned char* ddr_f  = (unsigned char*) 0x30;
+volatile unsigned char* pin_f  = (unsigned char*) 0x2F;
 // onboard LED
 volatile unsigned char* port_b = (unsigned char*) 0x25;
 volatile unsigned char* ddr_b  = (unsigned char*) 0x24;
