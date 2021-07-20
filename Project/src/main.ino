@@ -61,7 +61,7 @@ void setup() {
   //begin statement for LCD requiring the number of columns and rows:
   lcd.begin(16, 2);
   //WATER LEVEL SENSOR
-  *ddrF &= ~(0x01);
+  *ddr_f &= ~(0x01);
   //BUTTON
   *ddr_h &= ~(0x08);
   *port_h |= (0x08);
