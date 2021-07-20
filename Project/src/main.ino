@@ -2,12 +2,14 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <LiquidCrystal.h>
+#include <dht_nonblocking.h>
 
+#define DHT_SENSOR_TYPE DHT_TYPE_11
+#define DHT_SENSOR_PIN 2
 #define SS_PIN 53
-#define RST_PIN 5
+#define RST_PIN 13
 
 #define A0_PIN 0
-#define MAX_BITS_IN_REGISTER 8
 
 //This is for LCD change info button
 //define port H Register pointers
@@ -30,8 +32,12 @@ volatile unsigned char* pin_e  = (unsigned char*) 0x2C;
 volatile unsigned char* port_g = (unsigned char*) 0x34;
 volatile unsigned char* ddr_g  = (unsigned char*) 0x33;
 volatile unsigned char* pin_g  = (unsigned char*) 0x32;
+// define port A register pointers
+volatile unsigned char* port_a = (unsigned char*) 0x22;
+volatile unsigned char* ddr_a  = (unsigned char*) 0x21;
+volatile unsigned char* pin_a  = (unsigned char*) 0x20;
 
-
+DHT_nonblocking dht_sensor( DHT_SENSOR_PIN, DHT_SENSOR_TYPE );
 MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
 
 MFRC522::MIFARE_Key key;
@@ -42,7 +48,7 @@ LiquidCrystal lcd(7,8,9,10,11,12);
 bool buttonPress();
 bool buttonReleased();
 void adc_init();
-uint16_t adc_read(uint8_t adc_channel);
+uint8_t adc_read(uint8_t adc_channel);
 byte nuidPICC[4];
 volatile uint8_t water_level = 0;
 volatile bool authorized = false;
@@ -70,14 +76,14 @@ void setup() {
   //WATER LEVEL SENSOR
   //*ddr_f &= ~(0x01);
   //BUTTON
-  *ddr_h &= ~(0x08);
-  *port_h |= (0x08);
+  *ddr_a &= ~(1 << PA1);
+  *port_a |= (1 << PA1);
   //LED
   *ddr_b |= 0x80;
 }
 
 void loop() {
-  
+
   while(!rfid.PICC_ReadCardSerial()&& !rfid.PICC_IsNewCardPresent()){
     lcd.setCursor(0, 0);
     lcd.print(" Not Authorized ");
@@ -156,12 +162,10 @@ void loop() {
    }
   }
 }
-   
-
 
 
 bool buttonPress(){
-  if (*pin_h & (0x08)){  
+  if (*pin_a & (1 << PA1)){  
     *port_b |= 0x80; //LED HIGH
     return false;
    } else {
@@ -177,15 +181,15 @@ void adc_init() {
   ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
 }
 
-uint16_t adc_read(uint8_t adc_channel) {
+uint8_t adc_read(uint8_t adc_channel) {
   // Clears DIDR0 and DIDR2
   DIDR0 = 0x00;
   DIDR2 = 0x00;
   // Disables appropriate digital input buffer
-  if (adc_channel < MAX_BITS_IN_REGISTER)
+  if (adc_channel < 8)
     DIDR0 |= (1 << adc_channel);
   else 
-    DIDR2 |= (1 << (adc_channel - MAX_BITS_IN_REGISTER));
+    DIDR2 |= (1 << (adc_channel - 8));
   // Start sample
   ADCSRA |= (1 << ADSC);
   // Wait till sampling complete
