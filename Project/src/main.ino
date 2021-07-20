@@ -9,9 +9,9 @@
 
 //This is for LCD change info button
 //define port H Register pointers
-volatile unsigned char* portH = (unsigned char*) 0x102;
-volatile unsigned char* ddrH = (unsigned char*) 0x101;
-volatile unsigned char* pinH = (unsigned char*) 0x100;
+volatile unsigned char* port_h = (unsigned char*) 0x102;
+volatile unsigned char* ddr_h = (unsigned char*) 0x101;
+volatile unsigned char* pin_h = (unsigned char*) 0x100;
 // Watersensor
 volatile unsigned char* portF = (unsigned char*) 0x31;
 volatile unsigned char* ddrF = (unsigned char*) 0x30;
@@ -20,6 +20,15 @@ volatile unsigned char* pinF  = (unsigned char*) 0x2F;
 volatile unsigned char* port_b = (unsigned char*) 0x25;
 volatile unsigned char* ddr_b  = (unsigned char*) 0x24;
 volatile unsigned char* pin_b  = (unsigned char*) 0x23;
+// define port E register pointers
+volatile unsigned char* port_e = (unsigned char*) 0x2E;
+volatile unsigned char* ddr_e  = (unsigned char*) 0x2D;
+volatile unsigned char* pin_e  = (unsigned char*) 0x2C;
+// define port G register pointers
+volatile unsigned char* port_g = (unsigned char*) 0x34;
+volatile unsigned char* ddr_g  = (unsigned char*) 0x33;
+volatile unsigned char* pin_g  = (unsigned char*) 0x32;
+
 
 MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
 
@@ -54,8 +63,8 @@ void setup() {
   //WATER LEVEL SENSOR
   *ddrF &= ~(0x01);
   //BUTTON
-  *ddrH &= ~(0x08);
-  *portH |= (0x08);
+  *ddr_h &= ~(0x08);
+  *port_h |= (0x08);
   //LED
   *ddr_b |= 0x80;
 }
@@ -145,7 +154,7 @@ void loop() {
 
 
 bool buttonPress(){
-  if (*pinH & (0x08)){  
+  if (*pin_h & (0x08)){  
     *port_b |= 0x80; //LED HIGH
     return false;
    } else {
