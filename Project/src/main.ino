@@ -4,7 +4,7 @@
 #include <LiquidCrystal.h>
 
 #define SS_PIN 53
-#define RST_PIN 5
+#define RST_PIN 13
 
 #define A0_PIN 0
 
@@ -69,8 +69,8 @@ void setup() {
   //WATER LEVEL SENSOR
   //*ddr_f &= ~(0x01);
   //BUTTON
-  *ddr_h &= ~(0x08);
-  *port_h |= (0x08);
+  *ddr_e &= ~(1 << PE4);
+  *port_e |= (1 << PE4);
   //LED
   *ddr_b |= 0x80;
 }
@@ -155,12 +155,10 @@ void loop() {
    }
   }
 }
-   
-
 
 
 bool buttonPress(){
-  if (*pin_h & (0x08)){  
+  if (*pin_e & (1 << PE4)){  
     *port_b |= 0x80; //LED HIGH
     return false;
    } else {
