@@ -6,6 +6,8 @@
 #define SS_PIN 53
 #define RST_PIN 5
 
+#define A0_PIN 0
+#define MAX_BITS_IN_REGISTER 8
 
 //This is for LCD change info button
 //define port H Register pointers
@@ -39,7 +41,10 @@ LiquidCrystal lcd(7,8,9,10,11,12);
 
 bool buttonPress();
 bool buttonReleased();
+void adc_init();
+uint16_t adc_read(uint8_t adc_channel);
 byte nuidPICC[4];
+volatile uint8_t water_level = 0;
 volatile bool authorized = false;
 volatile int screenstate = 0;
 
@@ -48,6 +53,8 @@ void setup() {
   Serial.begin(9600);
   SPI.begin(); // Init SPI bus
   rfid.PCD_Init(); // Init MFRC522 
+  // initialize ADC for 8 bit resolution
+  adc_init();
 
   for (byte i = 0; i < 6; i++) {
     key.keyByte[i] = 0xFF;
@@ -61,7 +68,7 @@ void setup() {
   //begin statement for LCD requiring the number of columns and rows:
   lcd.begin(16, 2);
   //WATER LEVEL SENSOR
-  *ddr_f &= ~(0x01);
+  //*ddr_f &= ~(0x01);
   //BUTTON
   *ddr_h &= ~(0x08);
   *port_h |= (0x08);
@@ -163,3 +170,26 @@ bool buttonPress(){
    }
 }
 
+void adc_init() {
+  // Set reference voltage to voltage supply and left justify the output
+  ADMUX |= (1<<REFS0) | (1 << ADLAR);
+  // Set prescaler division  factor oto 128
+  ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
+}
+
+uint16_t adc_read(uint8_t adc_channel) {
+  // Clears DIDR0 and DIDR2
+  DIDR0 = 0x00;
+  DIDR2 = 0x00;
+  // Disables appropriate digital input buffer
+  if (adc_channel < MAX_BITS_IN_REGISTER)
+    DIDR0 |= (1 << adc_channel);
+  else 
+    DIDR2 |= (1 << (adc_channel - MAX_BITS_IN_REGISTER));
+  // Start sample
+  ADCSRA |= (1 << ADSC);
+  // Wait till sampling complete
+  while(ADCSRA & (1 << ADIF == 0));
+  // return ADC result
+  return ADCH;
+}
