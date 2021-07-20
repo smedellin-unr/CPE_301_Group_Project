@@ -29,7 +29,10 @@ volatile unsigned char* pin_e  = (unsigned char*) 0x2C;
 volatile unsigned char* port_g = (unsigned char*) 0x34;
 volatile unsigned char* ddr_g  = (unsigned char*) 0x33;
 volatile unsigned char* pin_g  = (unsigned char*) 0x32;
-
+// define port A register pointers
+volatile unsigned char* port_a = (unsigned char*) 0x22;
+volatile unsigned char* ddr_a  = (unsigned char*) 0x21;
+volatile unsigned char* pin_a  = (unsigned char*) 0x20;
 
 MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
 
@@ -69,14 +72,14 @@ void setup() {
   //WATER LEVEL SENSOR
   //*ddr_f &= ~(0x01);
   //BUTTON
-  *ddr_e &= ~(1 << PE4);
-  *port_e |= (1 << PE4);
+  *ddr_a &= ~(1 << PA1);
+  *port_a |= (1 << PA1);
   //LED
   *ddr_b |= 0x80;
 }
 
 void loop() {
-  
+
   while(!rfid.PICC_ReadCardSerial()&& !rfid.PICC_IsNewCardPresent()){
     lcd.setCursor(0, 0);
     lcd.print(" Not Authorized ");
@@ -158,7 +161,7 @@ void loop() {
 
 
 bool buttonPress(){
-  if (*pin_e & (1 << PE4)){  
+  if (*pin_a & (1 << PA1)){  
     *port_b |= 0x80; //LED HIGH
     return false;
    } else {
