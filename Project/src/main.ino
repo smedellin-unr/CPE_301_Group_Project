@@ -1,5 +1,4 @@
-```//group project
-
+//group project
 #include <SPI.h>
 #include <MFRC522.h>
 #include <LiquidCrystal.h>
@@ -154,4 +153,4 @@ bool buttonPress(){
     return true;
    }
 }
-```
+
