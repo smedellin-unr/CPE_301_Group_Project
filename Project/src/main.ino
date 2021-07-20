@@ -42,7 +42,7 @@ LiquidCrystal lcd(7,8,9,10,11,12);
 bool buttonPress();
 bool buttonReleased();
 void adc_init();
-uint16_t adc_read(uint8_t adc_channel);
+uint8_t adc_read(uint8_t adc_channel);
 byte nuidPICC[4];
 volatile uint8_t water_level = 0;
 volatile bool authorized = false;
@@ -177,19 +177,22 @@ void adc_init() {
   ADCSRA |= (1 << ADEN) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
 }
 
-uint16_t adc_read(uint8_t adc_channel) {
-  // Clears DIDR0 and DIDR2
+uint8_t adc_read(uint8_t adc_channel) {
+  // Clears DIDR0,DIDR2, and ADMUX analog channel selection
   DIDR0 = 0x00;
   DIDR2 = 0x00;
-  // Disables appropriate digital input buffer
-  if (adc_channel < MAX_BITS_IN_REGISTER)
+  ADMUX &= ~(0x07);
+  // Disables appropriate digital input buffer to avoid noise
+  if (adc_channel < 8)
     DIDR0 |= (1 << adc_channel);
   else 
-    DIDR2 |= (1 << (adc_channel - MAX_BITS_IN_REGISTER));
+    DIDR2 |= (1 << (adc_channel - 8));
+  // Select Analog channel
+  ADMUX |= adc_channel;
   // Start sample
   ADCSRA |= (1 << ADSC);
   // Wait till sampling complete
-  while(ADCSRA & (1 << ADIF == 0));
+  while(ADCSRA & ((1 << ADIF) == 0));
   // return ADC result
   return ADCH;
 }
