@@ -55,23 +55,15 @@ volatile bool authorized = false;
 volatile int screenstate = 0;
 
 void setup() {
-  //code from TENEKO for RFID
   Serial.begin(9600);
-  SPI.begin(); // Init SPI bus
+  SPI.begin();     // Init SPI bus
   rfid.PCD_Init(); // Init MFRC522 
-  // initialize ADC for 8 bit resolution
-  adc_init();
+  adc_init();      // initialize ADC for 8 bit resolution
 
   for (byte i = 0; i < 6; i++) {
     key.keyByte[i] = 0xFF;
   }
-  
-  Serial.println(F("This code scan the MIFARE Classsic NUID."));
-  Serial.print(F("Using the following key:"));
-  //printHex(key.keyByte, MFRC522::MF_KEY_SIZE);
 
-  //My LCD and Button code
-  //begin statement for LCD requiring the number of columns and rows:
   lcd.begin(16, 2);
   //WATER LEVEL SENSOR
   //*ddr_f &= ~(0x01);
@@ -84,43 +76,42 @@ void setup() {
 
 void loop() {
 
-  while(!rfid.PICC_ReadCardSerial()&& !rfid.PICC_IsNewCardPresent()){
-    lcd.setCursor(0, 0);
-    lcd.print(" Not Authorized ");
-    lcd.setCursor(0, 1);
-    lcd.print("                ");
-    while (buttonPress()){
-      lcd.setCursor(0, 0);
-      lcd.print("   PLEASE USE   ");
-      lcd.setCursor(0, 1);
-      lcd.print("   RFID CARD    ");
-      delay(200);
-    }
-  }
-  //read card
-  Serial.print(F("PICC type: "));
-  MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
-  Serial.println(rfid.PICC_GetTypeName(piccType));
-
-  // Check is the PICC of Classic MIFARE type
-  if (piccType != MFRC522::PICC_TYPE_MIFARE_MINI &&  
-    piccType != MFRC522::PICC_TYPE_MIFARE_1K &&
-    piccType != MFRC522::PICC_TYPE_MIFARE_4K) 
+  if( !authorized) 
   {
-   Serial.println(F("Your tag is not of type MIFARE Classic."));
-   authorized = false;
-  } else {
-    //Activates LCD for use
-    authorized = true;
-    Serial.println(F("Authorized User"));
-  }
-  
-  // Halt PICC
-  rfid.PICC_HaltA();
-  // Stop encryption on PCD
-  rfid.PCD_StopCrypto1();
+    while(!rfid.PICC_ReadCardSerial()&& !rfid.PICC_IsNewCardPresent()){
+      lcd.setCursor(0, 0);
+      lcd.print(" Not Authorized ");
+      lcd.setCursor(0, 1);
+      lcd.print("                ");
+      while (buttonPress()){
+        lcd.setCursor(0, 0);
+        lcd.print("   PLEASE USE   ");
+        lcd.setCursor(0, 1);
+        lcd.print("   RFID CARD    ");
+        delay(200);
+      }
+    }
+    //read card
+    MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
 
-  if (authorized = true){
+    // Check is the PICC of Classic MIFARE type
+    if (piccType != MFRC522::PICC_TYPE_MIFARE_MINI &&  
+      piccType != MFRC522::PICC_TYPE_MIFARE_1K &&
+      piccType != MFRC522::PICC_TYPE_MIFARE_4K) 
+    {
+    authorized = false;
+    } else {
+      //Activates LCD for use
+      authorized = true;
+    }
+    
+    // Halt PICC
+    rfid.PICC_HaltA();
+    // Stop encryption on PCD
+    rfid.PCD_StopCrypto1();
+  }
+  if(authorized = true)
+  {
     delay(100);
     for (int i = 0; i < 3; i++){
       lcd.setCursor(0, 0);
