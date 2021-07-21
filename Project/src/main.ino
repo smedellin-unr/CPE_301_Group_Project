@@ -8,8 +8,13 @@
 #define DHT_SENSOR_PIN 2
 #define SS_PIN 53
 #define RST_PIN 13
-
 #define A0_PIN 0
+
+// Defining states
+#define RFID_READING_STATE 2000
+#define AUTHORIZING_STATE 2100
+#define WATER_LEVEL_SCREEN_STATE 2200
+#define AIR_TEMPERATURE_SCREEN_STATE 2300
 
 //This is for LCD change info button
 //define port H Register pointers
@@ -53,6 +58,8 @@ byte nuidPICC[4];
 volatile uint8_t water_level = 0;
 volatile bool authorized = false;
 volatile int screenstate = 0;
+volatile int state = 0;
+volatile int next_state = 2000;
 
 void setup() {
   Serial.begin(9600);
@@ -76,90 +83,86 @@ void setup() {
 
 void loop() {
 
-  if( !authorized) 
-  {
-    while(!rfid.PICC_ReadCardSerial()&& !rfid.PICC_IsNewCardPresent()){
-      lcd.setCursor(0, 0);
-      lcd.print(" Not Authorized ");
-      lcd.setCursor(0, 1);
-      lcd.print("                ");
-      while (buttonPress()){
-        lcd.setCursor(0, 0);
-        lcd.print("   PLEASE USE   ");
-        lcd.setCursor(0, 1);
-        lcd.print("   RFID CARD    ");
-        delay(200);
-      }
-    }
-    //read card
-    MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
+  state = next_state;
 
-    // Check is the PICC of Classic MIFARE type
-    if (piccType != MFRC522::PICC_TYPE_MIFARE_MINI &&  
-      piccType != MFRC522::PICC_TYPE_MIFARE_1K &&
-      piccType != MFRC522::PICC_TYPE_MIFARE_4K) 
-    {
-    authorized = false;
-    } else {
-      //Activates LCD for use
-      authorized = true;
+  switch(state) {
+
+    case RFID_READING_STATE: {
+      if(!rfid.PICC_ReadCardSerial()&& 
+      !rfid.PICC_IsNewCardPresent()) {
+        lcd.setCursor(0, 0);
+        lcd.print(" Not Authorized ");
+        lcd.setCursor(0, 1);
+        lcd.print("                ");
+        while (buttonPress()) {
+          lcd.setCursor(0, 0);
+          lcd.print("   PLEASE USE   ");
+          lcd.setCursor(0, 1);
+          lcd.print("   RFID CARD    ");
+          delay(200);
+        }
+      }
+      else {
+        next_state = AUTHORIZING_STATE;
+      }
+      // Halt PICC
+      rfid.PICC_HaltA();
+      // Stop encryption on PCD
+      rfid.PCD_StopCrypto1();
+      break;
     }
-    
-    // Halt PICC
-    rfid.PICC_HaltA();
-    // Stop encryption on PCD
-    rfid.PCD_StopCrypto1();
-  }
-  if(authorized = true)
-  {
-    delay(100);
-    for (int i = 0; i < 3; i++){
-      lcd.setCursor(0, 0);
-      lcd.print(" Authorizing.   ");
-      lcd.setCursor(0, 1);
-      lcd.print("                ");
-      delay(120);
-      lcd.setCursor(0, 0);
-      lcd.print(" Authorizing..  ");
-      lcd.setCursor(0, 1);
-      lcd.print("                ");
-      delay(120);
-      lcd.setCursor(0, 0);
-      lcd.print(" Authorizing... ");
-      lcd.setCursor(0, 1);
-      lcd.print("                ");
-      delay(120);
-  }
-  screenstate = 1;
-  while(authorized = true){
-    while(screenstate == 1){
+    case AUTHORIZING_STATE: {
+      delay(100);
+      for (int i = 0; i < 3; i++){
+        lcd.setCursor(0, 0);
+        lcd.print(" Authorizing.   ");
+        lcd.setCursor(0, 1);
+        lcd.print("                ");
+        delay(120);
+        lcd.setCursor(0, 0);
+        lcd.print(" Authorizing..  ");
+        lcd.setCursor(0, 1);
+        lcd.print("                ");
+        delay(120);
+        lcd.setCursor(0, 0);
+        lcd.print(" Authorizing... ");
+        lcd.setCursor(0, 1);
+        lcd.print("                ");
+        delay(120);
+      }
+      next_state = WATER_LEVEL_SCREEN_STATE;
+      break;
+    }
+    case WATER_LEVEL_SCREEN_STATE: {
       lcd.setCursor(0, 0);
       lcd.print("Water Level:    ");
       lcd.setCursor(0, 1);
       lcd.print("over 9000       ");
-      while(buttonPress()){
-        screenstate = 2;
+      if(buttonPress()) {
+        next_state = AIR_TEMPERATURE_SCREEN_STATE;
       }
+      break;
     }
-    while(screenstate == 2){
+    case AIR_TEMPERATURE_SCREEN_STATE: {
       lcd.setCursor(0, 0);
       lcd.print("Air Temperature ");
       lcd.setCursor(0, 1);
       lcd.print("over 9000       ");
-      while(buttonPress()){
-        screenstate = 1;
+      if(buttonPress()) {
+        next_state = WATER_LEVEL_SCREEN_STATE;
       }
+      break;
     }
-   }
   }
 }
 
-
 bool buttonPress(){
   if (*pin_a & (1 << PA1)){  
+    delay(200);
     *port_b |= 0x80; //LED HIGH
     return false;
    } else {
+     delay(200);
     *port_b &= ~(0x80); //LED LOW
     return true;
    }
